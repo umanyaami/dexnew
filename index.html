@@ -26,11 +26,9 @@
     async function fetchData() {
       try {
         const response = await fetch('/api/tokens');
-        const result = await response.json();
+        const listings = await response.json();
         const tokensDiv = document.getElementById('tokens');
         tokensDiv.innerHTML = '';
-
-        const listings = result.result?.data?.tokenRecentListings || [];
 
         listings.forEach(listing => {
           const token = listing.token;
