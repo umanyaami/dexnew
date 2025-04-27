@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Solana New Tokens - Live Tracker</title>
+  <title>Solana New Tokens - Live Tracker (Tensor)</title>
   <style>
     body { font-family: Arial, sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 20px; }
     h1 { color: #00ffcc; }
@@ -15,7 +15,7 @@
   </style>
 </head>
 <body>
-  <h1>Solana New Tokens - Live Tracker</h1>
+  <h1>Solana New Tokens - Live Tracker (Tensor)</h1>
   <div id="tokens"></div>
 
   <div id="popup"></div>
@@ -30,42 +30,42 @@
         const tokensDiv = document.getElementById('tokens');
         tokensDiv.innerHTML = '';
 
-        const pairs = result.data || [];
+        const listings = result.result?.data?.tokenRecentListings || [];
 
-        pairs
-          .filter(pair => pair.chain === 'solana')
-          .sort((a, b) => b.created_at - a.created_at)
-          .forEach(pair => {
-            const liquidityUsd = parseFloat(pair.liquidity || 0);
-            const volume24h = parseFloat(pair.volume_usd_24h || 0);
-            const tokenAddress = pair.token_address || '';
-            const tokenName = pair.token_name || 'Unknown';
-            const tokenSymbol = pair.token_symbol || 'N/A';
-            const listingDate = pair.created_at ? new Date(pair.created_at * 1000).toLocaleString() : 'Unknown';
+        listings.forEach(listing => {
+          const token = listing.token;
+          const liquidity = token.liquidityUsd ?? 0;
+          const buyers = token.numBuyers ?? 0;
+          const sellers = token.numSellers ?? 0;
+          const website = token.websiteUrl || '';
+          const tokenAddress = token.mintAddress;
+          const tokenName = token.tokenName || 'Unknown';
+          const tokenSymbol = token.tokenSymbol || 'N/A';
+          const listingDate = token.listedAt ? new Date(token.listedAt * 1000).toLocaleString() : 'Unknown';
 
-            if (liquidityUsd >= 10000) {
-              if (!knownTokens.has(tokenAddress)) {
-                knownTokens.add(tokenAddress);
-                showPopup(`New Token: ${tokenName} (${tokenSymbol})`);
-              }
+          if (!knownTokens.has(tokenAddress)) {
+            knownTokens.add(tokenAddress);
+            showPopup(`New Token: ${tokenName} (${tokenSymbol})`);
+          }
 
-              const tokenElement = document.createElement('div');
-              tokenElement.className = 'token';
+          const tokenElement = document.createElement('div');
+          tokenElement.className = 'token';
 
-              tokenElement.innerHTML = `
-                <strong>${tokenName} (${tokenSymbol})</strong><br>
-                <strong>Liquidity:</strong> $${liquidityUsd.toLocaleString()}<br>
-                <strong>Volume (24h):</strong> $${volume24h.toLocaleString()}<br>
-                <strong>Listing Date:</strong> ${listingDate}<br>
-                <strong>Token Address:</strong> 
-                <span id="address-${tokenAddress}">${tokenAddress}</span>
-                <button class="copy-btn" onclick="copyAddress('${tokenAddress}')">Copy</button>
-              `;
-              tokensDiv.appendChild(tokenElement);
-            }
-          });
+          tokenElement.innerHTML = `
+            <strong>${tokenName} (${tokenSymbol})</strong><br>
+            <strong>Liquidity:</strong> $${liquidity.toLocaleString()}<br>
+            <strong>Buyers:</strong> ${buyers} | <strong>Sellers:</strong> ${sellers}<br>
+            <strong>Listing Date:</strong> ${listingDate}<br>
+            <strong>Token Address:</strong> 
+            <span id="address-${tokenAddress}">${tokenAddress}</span>
+            <button class="copy-btn" onclick="copyAddress('${tokenAddress}')">Copy</button><br>
+            ${website ? `<strong>Website:</strong> <a href="${website}" target="_blank">${website}</a>` : ''}
+          `;
+          tokensDiv.appendChild(tokenElement);
+        });
+
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error fetching data:', error);
       }
     }
 
