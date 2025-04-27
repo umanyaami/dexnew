@@ -37,25 +37,23 @@
 
     async function fetchData() {
       try {
-        const response = await fetch('https://api.dexscreener.com/latest/dex/pairs');
+        const response = await fetch('https://public-api.birdeye.so/defi/pairs');
         const result = await response.json();
         const tokensDiv = document.getElementById('tokens');
         tokensDiv.innerHTML = '';
 
-        const pairs = result.pairs || [];
+        const pairs = result.data || [];
 
         pairs
-          .filter(pair => pair.chainId === 'solana') // Filter hanya SOLANA
-          .sort((a, b) => b.pairCreatedAt - a.pairCreatedAt) // Urutkan terbaru dulu
+          .filter(pair => pair.chain === 'solana') // Filter hanya Solana
+          .sort((a, b) => b.created_at - a.created_at) // Urutkan terbaru dulu
           .forEach(pair => {
-            const liquidityUsd = parseFloat(pair.liquidity?.usd || 0);
-            const buyers24h = pair.txns?.h24?.buys || 0;
-            const sellers24h = pair.txns?.h24?.sells || 0;
-            const website = pair.info?.website || null;
-            const listingDate = pair.pairCreatedAt ? new Date(pair.pairCreatedAt).toLocaleString() : 'Unknown';
-            const tokenAddress = pair.baseToken?.address || '';
-            const tokenName = pair.baseToken?.name || 'Unknown';
-            const tokenSymbol = pair.baseToken?.symbol || '';
+            const liquidityUsd = parseFloat(pair.liquidity || 0);
+            const volume24h = parseFloat(pair.volume_usd_24h || 0);
+            const tokenAddress = pair.token_address || '';
+            const tokenName = pair.token_name || 'Unknown';
+            const tokenSymbol = pair.token_symbol || 'N/A';
+            const listingDate = pair.created_at ? new Date(pair.created_at * 1000).toLocaleString() : 'Unknown';
 
             if (liquidityUsd >= 10000) {
               if (!knownTokens.has(tokenAddress)) {
@@ -69,8 +67,7 @@
               tokenElement.innerHTML = `
                 <strong>${tokenName} (${tokenSymbol})</strong><br>
                 <strong>Liquidity:</strong> $${liquidityUsd.toLocaleString()}<br>
-                <strong>Buyers (24h):</strong> ${buyers24h} | <strong>Sellers (24h):</strong> ${sellers24h}<br>
-                <strong>Website:</strong> ${website ? `<a href="${website}" target="_blank">Visit</a>` : 'N/A'}<br>
+                <strong>Volume (24h):</strong> $${volume24h.toLocaleString()}<br>
                 <strong>Listing Date:</strong> ${listingDate}<br>
                 <strong>Token Address:</strong> 
                 <span id="address-${tokenAddress}">${tokenAddress}</span>
