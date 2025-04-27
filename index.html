@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Solana New Tokens - Live Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 20px; }
+    h1 { color: #00ffcc; }
+    .token { background: #1a1a1a; margin: 10px 0; padding: 15px; border-radius: 8px; }
+    .copy-btn { background: #00bcd4; color: #fff; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 5px; cursor: pointer; }
+    .copy-btn:hover { background: #0097a7; }
+    a { color: #4fc3f7; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    #popup { position: fixed; bottom: 20px; right: 20px; background: #00bcd4; color: #000; padding: 15px 20px; border-radius: 8px; display: none; box-shadow: 0 0 10px #00bcd4; z-index: 1000; }
+  </style>
+</head>
+<body>
+  <h1>Solana New Tokens - Live Tracker</h1>
+  <div id="tokens"></div>
+
+  <div id="popup"></div>
+
+  <script>
+    let knownTokens = new Set();
+
+    async function fetchData() {
+      try {
+        const response = await fetch('/api/tokens');
+        const result = await response.json();
+        const tokensDiv = document.getElementById('tokens');
+        tokensDiv.innerHTML = '';
+
+        const pairs = result.data || [];
+
+        pairs
+          .filter(pair => pair.chain === 'solana')
+          .sort((a, b) => b.created_at - a.created_at)
+          .forEach(pair => {
+            const liquidityUsd = parseFloat(pair.liquidity || 0);
+            const volume24h = parseFloat(pair.volume_usd_24h || 0);
+            const tokenAddress = pair.token_address || '';
+            const tokenName = pair.token_name || 'Unknown';
+            const tokenSymbol = pair.token_symbol || 'N/A';
+            const listingDate = pair.created_at ? new Date(pair.created_at * 1000).toLocaleString() : 'Unknown';
+
+            if (liquidityUsd >= 10000) {
+              if (!knownTokens.has(tokenAddress)) {
+                knownTokens.add(tokenAddress);
+                showPopup(`New Token: ${tokenName} (${tokenSymbol})`);
+              }
+
+              const tokenElement = document.createElement('div');
+              tokenElement.className = 'token';
+
+              tokenElement.innerHTML = `
+                <strong>${tokenName} (${tokenSymbol})</strong><br>
+                <strong>Liquidity:</strong> $${liquidityUsd.toLocaleString()}<br>
+                <strong>Volume (24h):</strong> $${volume24h.toLocaleString()}<br>
+                <strong>Listing Date:</strong> ${listingDate}<br>
+                <strong>Token Address:</strong> 
+                <span id="address-${tokenAddress}">${tokenAddress}</span>
+                <button class="copy-btn" onclick="copyAddress('${tokenAddress}')">Copy</button>
+              `;
+              tokensDiv.appendChild(tokenElement);
+            }
+          });
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+
+    function copyAddress(address) {
+      navigator.clipboard.writeText(address).then(() => {
+        alert('Copied: ' + address);
+      });
+    }
+
+    function showPopup(message) {
+      const popup = document.getElementById('popup');
+      popup.innerText = message;
+      popup.style.display = 'block';
+      setTimeout(() => {
+        popup.style.display = 'none';
+      }, 5000);
+    }
+
+    fetchData();
+    setInterval(fetchData, 10000);
+  </script>
+</body>
+</html>
