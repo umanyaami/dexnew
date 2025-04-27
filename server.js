@@ -9,10 +9,9 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Proxy API ke Birdeye
 app.get('/api/tokens', async (req, res) => {
   try {
-    const response = await axios.get('https://public-api.birdeye.so/defi/pairs');
+    const response = await axios.get('https://api.tensor.trade/v1/trpc/tokenRecentListings.get');
     res.json(response.data);
   } catch (error) {
     console.error('Error fetching tokens:', error.message);
